@@ -1,0 +1,186 @@
+import discord
+import random
+import os
+import requests
+from discord.ext import commands
+from functions import foxpic
+import asyncio
+
+
+
+intents = discord.Intents.default()
+intents.message_content = True
+
+bot = commands.Bot(command_prefix='/', intents=intents)
+
+
+#command bothelp
+@bot.command()
+async def bothelp(ctx):
+    commands_info = [command.name + " " + command.signature for command in bot.commands]
+    commands_str = "\n".join(commands_info)
+
+
+    await ctx.send(f"Available commands:\n```\n{commands_str}\n``` ")
+    await ctx.send("and the prefix is '/'")
+
+
+@bot.event
+async def on_ready():
+    print(f'I am in! My codename is: "{bot.user}')
+
+#eto novaia funkcia, sdelal ee shtob protestit
+@bot.event  
+async def on_message(message): # ловит все текстовые сообщения
+    
+    if message.content == 'test':
+        await message.channel.send("How dare you even try to test me, impudent human!")
+
+    #Важно для работы команд!! 
+    await bot.process_commands(message)
+
+
+
+
+
+
+
+
+#farawells  
+@bot.command()
+async def hello(ctx):
+    await ctx.send(f"Surprise! I'm back, and my name is {bot.user}!")
+
+#greeting
+@bot.command(name = "goodbyes", description = "does he really want to go though?")
+async def bye(ctx):
+    await ctx.send(f"Dont you dare talk to me like that! I'm not going anywhere!")
+
+
+#bot doesnt reply to itself
+async def on_message(self, message):
+        # we do not want the bot to reply to itself
+    if message.author.id == self.user.id:
+        return
+
+
+
+#choice
+@bot.command()
+async def choose(ctx, *choices: str):
+    """Chooses between multiple choices."""
+    await ctx.send(random.choice(choices))
+
+
+
+#spam
+@bot.command()
+async def repeat(ctx, times: int, content='repeating...'):
+    """Repeats a message multiple times."""
+    for i in range(times):
+        await ctx.send(content)
+
+
+
+
+#generator of passwords
+@bot.command()
+async def gen(ctx, length: int):
+    generated = ''
+    for i in range(length):
+        Symbols = "+-_/*!&$#?=@abcdefghijklnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+        randomised = random.choice(Symbols)
+        generated += randomised
+
+    await ctx.send(generated)
+
+#show the list with memes
+@bot.command(name= "memeslist", description = "shows you all the memes that it has")
+async def memes(ctx):
+    await ctx.send(os.listdir('bot for kodland/memes'))
+    await ctx.send("Use the command $mem and the number which resembles the meme's position on the list to choose a meme to see!")
+
+
+#show a particular meme
+@bot.command()
+async def mem(ctx, i):
+    memelist = os.listdir('bot for kodland/memes/')
+    img = memelist[int(i)-1]
+    with open(f'bot for kodland/memes/{img}', 'rb') as f:
+        # В переменную кладем файл, который преобразуется в файл библиотеки Discord!
+        picture = discord.File(f)
+   # Можем передавать файл как параметр!
+    await ctx.send(file=picture)
+
+
+#show random meme
+@bot.command(name = "random meme" ,description = "shows you a random meme")
+async def rmem(ctx, i):
+    memelist = os.listdir('bot for kodland/memes/')
+    ranmem = random.choice(memelist)
+    with open(f'bot for kodland/memes/{ranmem}', 'rb') as f:
+        picture = discord.File(f)
+        await ctx.send(file = picture)  
+
+
+
+#show a pic of a fox
+@bot.command()
+async def fox(ctx):
+    image_url = foxpic()
+    await ctx.send(image_url)
+
+
+
+#trash sorting stuff
+@bot.command()
+async def trash(ctx):
+    await ctx.send("There are 5 categories of trash: Plastic, general trash, bio-waste, paper, and glass. (at least in Germany, where I live) Please select your category of trash.")
+
+    def check(message):
+        return message.author == ctx.author and message.channel == ctx.channel
+
+    options = ["plastic", "general trash", "bio-waste", "paper", "glass"]
+    try:
+        response = await bot.wait_for('message', check=check, timeout=30)  # Wait for user response
+        choice = response.content.lower()
+        if choice in options:
+            #plastic
+            if choice == "plastic":
+                await ctx.send("Plastic is actually one of the less used options. Usually we, teenagers, use plastic trash only when buying new things, such as toys, phones, other kinds of devices, etc.")
+                await ctx.send("In germany, the plastic trash is marked in yellow color, and there is quite a fine if someone catches you misusing the trash bins")
+            #general trash
+            elif choice == "general trash":
+                await ctx.send("general trash is what most people use on a daily basis. It's used to get rid of food waste that is not qualified as bio-waste, and other general uses")
+                await ctx.send("In germany, the general trash is marked in black color, and there is quite a fine if someone catches you misusing the trash bins")
+                await ctx.send("Important remark!: The food leftovers that have a lot of fat(e.g. pizzas, yogurt, sometimes some drink, etc.) Are also supposed to go into general trash, not plastic or bio-waste!!")
+            #bio waste
+            elif choice == "bio-waste":
+                await ctx.send("Bio waste is also one of the less-used trash bins in germany. It is used for easily recyclabe stuff like the leftover food (e.g. banana peels) or farming equipment such as compost")
+                await ctx.send("In germany, the bio-waste trash is marked in green or brown color, and there is quite a fine if someone catches you misusing the trash bins")
+            #paper
+            elif choice == "paper":
+                await ctx.send("Paper is also one of the more often used bins. It is often used to get rid of old class assignments or useless sketches that many people do when bored. Cardboard is also qualified as paper in germany")
+                await ctx.send("In germany, the paper bin is marked in yellow or blue color, and there is quite a fine if someone catches you misusing the trash bins")
+            #glass
+            elif choice == "glass":
+                await ctx.send("Glass is mostly thrown out into big sphere-ish trash bins outside of stores(usually). There are different containers for white glass and colored glass")
+                await ctx.send("In germany, the glass bins dont have a specific marking, but they have a different form compared to other bins and usually have text on them, that shows what kind of glass goes inside, and there is quite a fine if someone catches you misusing the trash bins")
+            
+            #error
+            else:
+                await ctx.send("Invalid choice. Please select one of the provided categories.")
+    except asyncio.TimeoutError:
+        await ctx.send("You didn't respond in time. Please try again.")
+
+
+
+
+
+
+    
+
+
+
+
+bot.run("token here")
